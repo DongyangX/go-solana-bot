@@ -1,0 +1,38 @@
+
+PublicKey: xxx
+PrivateKey: xxx
+
+#SubscribeWallet: 7vhiZSwxBqfsgidsV2dtvSNEjUat913khRava1hLC7eu
+SubscribeWallet: HuTshmtwcQkWBLzgW3m4uwcmik7Lmz4YFpYcTqMJpXiP
+
+#RpcUrl: https://mainnet.helius-rpc.com/?api-key=xxx
+#WsUrl: wss://mainnet.helius-rpc.com/?api-key=xxx
+RpcUrl: https://rpc.shyft.to?api_key=xxx
+WsUrl: wss://rpc.shyft.to?api_key=xxx
+
+TransactionsUrl: https://api.helius.xyz/v0/transactions
+TransactionsApiKey: xxx
+
+UseJito: true
+JitoUrl: https://tokyo.mainnet.block-engine.jito.wtf/api/v1/transactions
+QuoteUrl: https://lite-api.jup.ag/swap/v1/quote
+PriceUrl: https://lite-api.jup.ag/price/v3
+OneBuyUsd: 0.2
+BuySlippage: 5
+SellSlippage: 5
+BuyPriorityFee: 0
+SellPriorityFee: 0
+SellRisePercent: 20
+SellFallPercent: 10
+
+SolToken: So11111111111111111111111111111111111111112
+UsdcToken: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+
+MqUrl: 192.168.2.119:9876
+MqGroup: SubGroup
+MqTopic: SubTopic
+
+MySqlUrl: root:123456@tcp(127.0.0.1:3306)/solana_trade_bot?charset=utf8mb4&parseTime=True&loc=Local
+
+UseProxy: true
+ProxyUrl: http://127.0.0.1:10808

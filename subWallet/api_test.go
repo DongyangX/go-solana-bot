@@ -1,10 +1,10 @@
 package main
 
 import (
-	"MySolanaClient/utils"
 	"context"
 	"encoding/json"
 	"fmt"
+	"go-solana-bot/utils"
 	"testing"
 	"time"
 

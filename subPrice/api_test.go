@@ -1,7 +1,7 @@
 package main
 
 import (
-	"MySolanaClient/utils"
+	"go-solana-bot/utils"
 	"testing"
 )
 

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"MySolanaClient/common"
-	"MySolanaClient/utils"
 	"context"
 	"encoding/json"
 	"fmt"
+	"go-solana-bot/common"
+	"go-solana-bot/utils"
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"

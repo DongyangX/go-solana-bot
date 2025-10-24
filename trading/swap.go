@@ -1,13 +1,13 @@
 package main
 
 import (
-	"MySolanaClient/common"
-	"MySolanaClient/utils"
 	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"go-solana-bot/common"
+	"go-solana-bot/utils"
 	"io"
 	"net/http"
 	"time"

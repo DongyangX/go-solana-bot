@@ -1,10 +1,10 @@
 package main
 
 import (
-	"MySolanaClient/common"
-	"MySolanaClient/utils"
 	"encoding/json"
 	"fmt"
+	"go-solana-bot/common"
+	"go-solana-bot/utils"
 	"math"
 	"strings"
 	"time"

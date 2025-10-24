@@ -1,8 +1,8 @@
 package main
 
 import (
-	"MySolanaClient/common"
-	"MySolanaClient/utils"
+	"go-solana-bot/common"
+	"go-solana-bot/utils"
 	"testing"
 )
 

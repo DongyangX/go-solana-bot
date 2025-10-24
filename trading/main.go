@@ -32,7 +32,7 @@ func main() {
 	// 1.Get Message
 	c, err := rocketmq.NewPushConsumer(
 		consumer.WithGroupName(config.MqGroup),
-		consumer.WithNsResolver(primitive.NewPassthroughResolver([]string{config.MqTopic})),
+		consumer.WithNsResolver(primitive.NewPassthroughResolver([]string{config.MqUrl})),
 	)
 	if err != nil {
 		panic(err)
@@ -48,12 +48,14 @@ func main() {
 			if swapMessage.SwapType == "buy" {
 				buyMints := swapMessage.BuyMints
 				for _, mint := range buyMints {
-					BuyMint(mint, config, db)
+					// Check signature need 60 second so use goroutine
+					go BuyMint(mint, config, db)
 				}
 			} else {
 				sellMints := swapMessage.SellMints
 				for _, mint := range sellMints {
-					SellMint(mint.Token, mint.Amount, config, db)
+					// Check signature need 60 second so use goroutine
+					go SellMint(mint.Token, mint.Amount, config, db)
 				}
 			}
 		}

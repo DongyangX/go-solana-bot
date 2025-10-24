@@ -38,7 +38,7 @@ func TestSellMint(t *testing.T) {
 	if tx.Error != nil {
 		panic(tx.Error)
 	} else {
-		// SellMint(mint string, uiAmount float64, config *utils.Config, db *gorm.DB)
+		// SellMint(mint string, amount int64, config *utils.Config, db *gorm.DB)
 		SellMint(mint.Token, mint.Amount, config, db)
 	}
 }

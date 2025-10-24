@@ -115,7 +115,7 @@ func GetPrice(positions []common.Position, config *utils.Config) (map[string]map
 	// Get Price
 	pUrl := config.PriceUrl + "?ids=" + idsStr
 	resp, err := utils.HttpGet(pUrl)
-	fmt.Println(resp)
+	fmt.Println("GetPrice Response:", string(resp))
 
 	priceMap := make(map[string]map[string]float64)
 	err = json.Unmarshal(resp, &priceMap)

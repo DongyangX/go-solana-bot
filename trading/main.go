@@ -50,7 +50,7 @@ func main() {
 				for _, mint := range buyMints {
 					// Check signature need 60 second so use goroutine
 					// 60 second same token buy or sell message will come, use sql row lock
-					if UpdatePositionStatus(db, mint, "B") > 0 {
+					if CheckPositionStatus(db, mint, "B") > 0 {
 						go BuyMint(mint, config, db)
 					}
 				}
@@ -59,7 +59,7 @@ func main() {
 				for _, mint := range sellMints {
 					// Check signature need 60 second so use goroutine
 					// 60 second same token buy or sell message will come, use sql row lock
-					if UpdatePositionStatus(db, mint.Token, "S") > 0 {
+					if CheckPositionStatus(db, mint.Token, "S") > 0 {
 						go SellMint(mint.Token, mint.Amount, config, db)
 					}
 				}
@@ -203,11 +203,17 @@ func UpdatePositionZero(db *gorm.DB, position *common.Position) {
 		"Amount": 0, "CostPrice": 0, "CurrentPrice": 0, "Pnl": 0, "Status": "N"})
 }
 
-// UpdatePositionStatus update status to B or S,
+// CheckPositionStatus update status to B or S,
 // if status is B mean buying, return 0, do noting,
 // if status is S mean selling, return 0, do noting,
 // only status is N can change, return 1, this like a lock
-func UpdatePositionStatus(db *gorm.DB, token string, status string) int64 {
+func CheckPositionStatus(db *gorm.DB, token string, status string) int64 {
+	var count int64
+	db.Table("positions").Where("token = ?", token).Count(&count)
+	if count > 0 {
+		// not exist, buy
+		return 999
+	}
 	tx := db.Table("positions").Where("token=? and status=?",
 		token,
 		"N",

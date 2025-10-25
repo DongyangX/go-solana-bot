@@ -1,15 +1,12 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"go-solana-bot/common"
 	"go-solana-bot/utils"
-	"io"
-	"net/http"
 	"time"
 
 	"github.com/gagliardetto/solana-go/rpc"
@@ -195,8 +192,6 @@ func SendTransactionWithJito(ctx context.Context, txBase64 string, wallet solana
 	}
 	encodedTx := base64.StdEncoding.EncodeToString(txData)
 
-	// Do not need proxy
-	jitoClient := utils.GetJitoClient()
 	encodingMap := make(map[string]interface{})
 	encodingMap["encoding"] = "base64"
 	params := []interface{}{encodedTx, encodingMap}
@@ -207,19 +202,11 @@ func SendTransactionWithJito(ctx context.Context, txBase64 string, wallet solana
 		return "", err
 	}
 	fmt.Printf("jito request: %s\n", string(reqBodyJson))
-	payload := bytes.NewReader(reqBodyJson)
-	req, _ := http.NewRequest("POST", config.JitoUrl, payload)
-	req.Header.Add("Content-Type", "application/json")
-	resp, err := jitoClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
-	fmt.Printf("jito response: %s\n", string(body))
+	resp, err := utils.HttpPost(config.JitoUrl, reqBodyJson, nil)
+	fmt.Printf("jito response: %s\n", string(resp))
 
 	var respBody common.JitoTransactionRespBody
-	err = json.Unmarshal(body, &respBody)
+	err = json.Unmarshal(resp, &respBody)
 	sig := respBody.Result
 	return solana.TxID(sig), nil
 }

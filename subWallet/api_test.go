@@ -48,14 +48,14 @@ func TestGetPrice(t *testing.T) {
 	amount := "1000000"
 	qUrl := config.QuoteUrl + "?inputMint=" + config.UsdcToken + "&outputMint=" + mint + "&amount=" + amount + "&slippageBps=50"
 
-	resp, err := utils.HttpGet(qUrl)
-	fmt.Println(resp)
+	resp, err := utils.HttpProxyGet(qUrl)
+	fmt.Println(string(resp))
 
 	time.Sleep(time.Second)
 
-	pUrl := "https://lite-api.jup.ag/price/v3?ids=" + mint
-	resp, err = utils.HttpGet(pUrl)
-	fmt.Println(resp)
+	pUrl := config.PriceUrl + "?ids=" + mint
+	resp, err = utils.HttpProxyGet(pUrl)
+	fmt.Println(string(resp))
 }
 
 func Test(t *testing.T) {

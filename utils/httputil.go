@@ -10,33 +10,14 @@ import (
 )
 
 var (
-	client     *http.Client
-	jitoClient *http.Client
-	once       sync.Once
+	client      *http.Client
+	proxyClient *http.Client
+	once        sync.Once
 )
 
 func GetHttpClient() *http.Client {
 	once.Do(func() {
-		config, err := LoadConfig()
-		if err != nil {
-			fmt.Println(err)
-		}
-		if config.UseProxy {
-			// Use proxy in China main land
-			proxyURL, err := url.Parse(config.ProxyUrl)
-			if err != nil {
-				fmt.Println(err)
-			}
-			transport := &http.Transport{
-				Proxy: http.ProxyURL(proxyURL),
-			}
-			client = &http.Client{
-				Transport: transport,
-			}
-		} else {
-			// Do not use proxy
-			client = &http.Client{}
-		}
+		client = &http.Client{}
 	})
 	return client
 }
@@ -73,9 +54,39 @@ func HttpPost(url string, reqBody []byte, query map[string]string) ([]byte, erro
 	return respBody, nil
 }
 
-func GetJitoClient() *http.Client {
-	if jitoClient == nil {
-		jitoClient = &http.Client{}
+func GetProxyClient() *http.Client {
+	once.Do(func() {
+		config, err := LoadConfig()
+		if err != nil {
+			fmt.Println(err)
+		}
+		if config.UseProxy {
+			// Use proxy in China main land
+			proxyURL, err := url.Parse(config.ProxyUrl)
+			if err != nil {
+				fmt.Println(err)
+			}
+			transport := &http.Transport{
+				Proxy: http.ProxyURL(proxyURL),
+			}
+			proxyClient = &http.Client{
+				Transport: transport,
+			}
+		} else {
+			// Do not use proxy
+			proxyClient = &http.Client{}
+		}
+	})
+	return proxyClient
+}
+
+func HttpProxyGet(url string) ([]byte, error) {
+	proxyClient := GetProxyClient()
+	resp, err := proxyClient.Get(url)
+	if err != nil {
+		fmt.Println(err)
 	}
-	return jitoClient
+	defer resp.Body.Close()
+	respBody, _ := io.ReadAll(resp.Body)
+	return respBody, nil
 }

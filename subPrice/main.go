@@ -114,7 +114,7 @@ func GetPrice(positions []common.Position, config *utils.Config) (map[string]map
 
 	// Get Price
 	pUrl := config.PriceUrl + "?ids=" + idsStr
-	resp, err := utils.HttpGet(pUrl)
+	resp, err := utils.HttpProxyGet(pUrl)
 	fmt.Println("GetPrice Response:", string(resp))
 
 	priceMap := make(map[string]map[string]float64)

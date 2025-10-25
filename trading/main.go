@@ -51,7 +51,7 @@ func main() {
 					// Check signature need 60 second so use goroutine
 					// 60 second same token buy or sell message will come, use sql row lock
 					if CheckPositionStatus(db, mint, "B") > 0 {
-						go BuyMint(mint, config, db)
+						//go BuyMint(mint, config, db)
 					}
 				}
 			} else {
@@ -60,7 +60,7 @@ func main() {
 					// Check signature need 60 second so use goroutine
 					// 60 second same token buy or sell message will come, use sql row lock
 					if CheckPositionStatus(db, mint.Token, "S") > 0 {
-						go SellMint(mint.Token, mint.Amount, config, db)
+						//go SellMint(mint.Token, mint.Amount, config, db)
 					}
 				}
 			}
@@ -92,7 +92,7 @@ func BuyMint(mint string, config *utils.Config, db *gorm.DB) {
 	}
 	// Get Decimals
 	pUrl := config.PriceUrl + "?ids=" + mint
-	resp, err := utils.HttpGet(pUrl)
+	resp, err := utils.HttpProxyGet(pUrl)
 	fmt.Println(string(resp))
 
 	priceMap := make(map[string]map[string]float64)

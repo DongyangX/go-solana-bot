@@ -12,6 +12,8 @@ WsUrl: wss://rpc.shyft.to?api_key=xxx
 
 TransactionsUrl: https://api.helius.xyz/v0/transactions
 TransactionsApiKey: xxx
+STransactionsUrl: https://api.shyft.to/sol/v1/transaction/parsed
+STransactionsApiKey: xxx
 
 UseJito: true
 JitoUrl: https://tokyo.mainnet.block-engine.jito.wtf/api/v1/transactions

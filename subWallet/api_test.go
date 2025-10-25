@@ -1,16 +1,11 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
-	"go-solana-bot/common"
 	"go-solana-bot/utils"
 	"testing"
 	"time"
-
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
 )
 
 func TestGetTransactions(t *testing.T) {
@@ -36,7 +31,7 @@ func TestGetTransactions2(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	sign := "3JE25UxASi6dWj7a18aXd1eGTwgJBP9jj2bFNVbG3ozudkhqjewgjSeCZxndp6Dh6Lbt8rZ469tpgy6yxaXPDvbY"
+	sign := "51TYWL98dtzpbkEMnQebapGBhT9CxuG4oEeKjHFHLoTt9SQWZ2Rb7rtuvHttjUxAz3hvQG9cnveaDbSDheYHGkP8"
 
 	reqBody := fmt.Sprintf(`{
 		"jsonrpc": "2.0",
@@ -63,40 +58,13 @@ func TestGetTransactions3(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	rpcClient := rpc.New(config.RpcUrl)
-	version := uint64(0)
-	tx, err := rpcClient.GetParsedTransaction(context.Background(),
-		solana.MustSignatureFromBase58("51TYWL98dtzpbkEMnQebapGBhT9CxuG4oEeKjHFHLoTt9SQWZ2Rb7rtuvHttjUxAz3hvQG9cnveaDbSDheYHGkP8"),
-		&rpc.GetParsedTransactionOpts{
-			MaxSupportedTransactionVersion: &version,
-		},
-	)
+	out, err := utils.HttpGet(config.STransactionsUrl+
+		"51TYWL98dtzpbkEMnQebapGBhT9CxuG4oEeKjHFHLoTt9SQWZ2Rb7rtuvHttjUxAz3hvQG9cnveaDbSDheYHGkP8",
+		map[string]string{"x-api-key": config.STransactionsApiKey})
 	if err != nil {
-		return
+		panic(err)
 	}
-
-	balances := make([]common.TokenBalanceChange, len(tx.Meta.PostTokenBalances))
-
-	for i, balance := range tx.Meta.PostTokenBalances {
-		balances[i] = common.TokenBalanceChange{
-			Owner:      balance.Owner.String(),
-			Mint:       balance.Mint.String(),
-			PostAmount: balance.UiTokenAmount.Amount,
-		}
-	}
-
-	for _, preBalance := range tx.Meta.PreTokenBalances {
-		for i, postBalance := range balances {
-			if preBalance.Owner.String() == postBalance.Owner && preBalance.Mint.String() == postBalance.Mint {
-				balances[i].PreAmount = preBalance.UiTokenAmount.Amount
-			}
-		}
-	}
-
-	fmt.Println("show balance change")
-	for _, balance := range balances {
-		fmt.Printf("%s %s %s -> %s\n", balance.Owner, balance.Mint, balance.PreAmount, balance.PostAmount)
-	}
+	fmt.Println(string(out))
 }
 
 func TestGetPrice(t *testing.T) {

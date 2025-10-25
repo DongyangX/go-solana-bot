@@ -16,7 +16,7 @@ func main() {
 	config, _ := utils.LoadConfig()
 
 	ctx := context.Background()
-	rpcClient := rpc.New(config.RpcUrl)
+	//rpcClient := rpc.New(config.RpcUrl)
 	wsClient, err := ws.Connect(context.Background(), config.WsUrl)
 	if err != nil {
 		panic(err)
@@ -45,55 +45,21 @@ func main() {
 		signatures := got.Value.Signature
 
 		// Option 1
-		GetTransactions1(&signatures, rpcClient)
+		GetTransactions1(&signatures, config)
 		// Option 2
 		//transactions, err := GetTransactions2(signatures, config)
-		if err != nil {
-			panic(err)
-		}
-
+		// TODO analyze transactions and send message to buy token?
 	}
 }
 
-// GetTransactions1 GetParsedTransaction
-func GetTransactions1(signatures *solana.Signature, rcpClient *rpc.Client) {
-
-	version := uint64(0)
-	tx, err := rcpClient.GetParsedTransaction(context.Background(),
-		*signatures,
-		&rpc.GetParsedTransactionOpts{
-			MaxSupportedTransactionVersion: &version,
-		},
-	)
+// GetTransactions1 https://api.shyft.to/sol/v1/transaction/parsed
+func GetTransactions1(signatures *solana.Signature, config *utils.Config) {
+	out, err := utils.HttpGet(config.STransactionsUrl+"?network=mainnet-beta&txn_signature="+signatures.String(),
+		map[string]string{"x-api-key": config.STransactionsApiKey})
 	if err != nil {
-		return
+		panic(err)
 	}
-
-	balances := make([]common.TokenBalanceChange, len(tx.Meta.PostTokenBalances))
-
-	for i, balance := range tx.Meta.PostTokenBalances {
-		if balance.Mint.String() != "So11111111111111111111111111111111111111112" {
-			balances[i] = common.TokenBalanceChange{
-				Owner:      balance.Owner.String(),
-				Mint:       balance.Mint.String(),
-				PostAmount: balance.UiTokenAmount.Amount,
-			}
-		}
-	}
-
-	for _, preBalance := range tx.Meta.PreTokenBalances {
-		for i, postBalance := range balances {
-			if preBalance.Owner.String() == postBalance.Owner && preBalance.Mint.String() == postBalance.Mint {
-				balances[i].PreAmount = preBalance.UiTokenAmount.Amount
-			}
-		}
-	}
-
-	fmt.Println("show balance change")
-	for _, balance := range balances {
-		fmt.Printf("%s %s %s -> %s\n", balance.Owner, balance.Mint, balance.PreAmount, balance.PostAmount)
-	}
-
+	fmt.Println(string(out))
 }
 
 // GetTransactions2 https://api.helius.xyz/v0/transactions

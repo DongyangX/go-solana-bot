@@ -52,7 +52,7 @@ func main() {
 		//spew.Dump(signatures)
 
 		// Option 1
-		// GetTransactions1(signatures, rpcClient)
+		// GetTransactions1(signatures, config)
 		// Option 2
 		transactions, err := GetTransactions2(signatures, config)
 		if err != nil {
@@ -78,28 +78,14 @@ func main() {
 	}
 }
 
-// GetTransactions1 GetParsedTransaction
-func GetTransactions1(signatures []*rpc.TransactionSignature, rpcClient *rpc.Client) {
-	sign := signatures[0].Signature
-	version := uint64(0)
-	transaction, err := rpcClient.GetParsedTransaction(
-		context.TODO(),
-		sign,
-		&rpc.GetParsedTransactionOpts{Commitment: "confirmed", MaxSupportedTransactionVersion: &version},
-	)
+// GetTransactions1 https://api.shyft.to/sol/v1/transaction/parsed
+func GetTransactions1(signatures *solana.Signature, config *utils.Config) {
+	out, err := utils.HttpGet(config.STransactionsUrl+"?network=mainnet-beta&txn_signature="+signatures.String(),
+		map[string]string{"x-api-key": config.STransactionsApiKey})
 	if err != nil {
 		panic(err)
 	}
-	innerInstruction := transaction.Meta.InnerInstructions[0]
-	for _, instruction := range innerInstruction.Instructions {
-		if instruction.ProgramId.String() == "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA" {
-			j, err := instruction.Parsed.MarshalJSON()
-			if err != nil {
-				panic(err)
-			}
-			fmt.Println(string(j))
-		}
-	}
+	fmt.Println(string(out))
 }
 
 // GetTransactions2 https://api.helius.xyz/v0/transactions

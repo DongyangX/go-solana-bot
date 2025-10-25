@@ -22,9 +22,15 @@ func GetHttpClient() *http.Client {
 	return client
 }
 
-func HttpGet(url string) ([]byte, error) {
+func HttpGet(url string, header map[string]string) ([]byte, error) {
 	client := GetHttpClient()
-	resp, err := client.Get(url)
+	req, _ := http.NewRequest("GET", url, nil)
+	if header != nil {
+		for k, v := range header {
+			req.Header.Add(k, v)
+		}
+	}
+	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
 	}

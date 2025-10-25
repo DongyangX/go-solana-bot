@@ -18,6 +18,8 @@ CREATE TABLE `positions` (
      KEY `token` (`token`)
 ) ENGINE=InnoDB;
 
+ALTER TABLE positions ADD status varchar(1) NULL COMMENT 'N-next super star B-buying S-selling';
+
 -- solana_trade_bot.swap_records definition
 
 CREATE TABLE `swap_records` (

@@ -49,13 +49,19 @@ func main() {
 				buyMints := swapMessage.BuyMints
 				for _, mint := range buyMints {
 					// Check signature need 60 second so use goroutine
-					go BuyMint(mint, config, db)
+					// 60 second same token buy or sell message will come, use sql row lock
+					if UpdatePositionStatus(db, mint, "B") > 0 {
+						go BuyMint(mint, config, db)
+					}
 				}
 			} else {
 				sellMints := swapMessage.SellMints
 				for _, mint := range sellMints {
 					// Check signature need 60 second so use goroutine
-					go SellMint(mint.Token, mint.Amount, config, db)
+					// 60 second same token buy or sell message will come, use sql row lock
+					if UpdatePositionStatus(db, mint.Token, "S") > 0 {
+						go SellMint(mint.Token, mint.Amount, config, db)
+					}
 				}
 			}
 		}
@@ -128,6 +134,7 @@ func UpdateDataBuy(db *gorm.DB, record *common.SwapRecord) {
 			CurrentPrice: record.BuyPrice,
 			Pnl:          float64(0),
 			Decimals:     record.Decimals,
+			Status:       "N",
 		}
 		InsertPosition(db, position)
 	} else {
@@ -136,6 +143,7 @@ func UpdateDataBuy(db *gorm.DB, record *common.SwapRecord) {
 		avgPrice := (float64(position.Amount)*position.CostPrice + buyAmount*record.BuyPrice) / totalAmount
 		position.Amount = int64(totalAmount)
 		position.CostPrice = avgPrice
+		position.Status = "N"
 		UpdatePosition(db, position)
 	}
 }
@@ -167,6 +175,7 @@ func UpdateDataSell(db *gorm.DB, record *common.SwapRecord) {
 		position.CostPrice = 0
 		position.CurrentPrice = 0
 		position.Pnl = 0
+		position.Status = "N"
 		UpdatePositionZero(db, position)
 	}
 }
@@ -190,7 +199,20 @@ func UpdatePosition(db *gorm.DB, position *common.Position) {
 }
 
 func UpdatePositionZero(db *gorm.DB, position *common.Position) {
-	db.Model(&position).Updates(map[string]interface{}{"Amount": 0, "CostPrice": 0, "CurrentPrice": 0, "Pnl": 0})
+	db.Model(&position).Updates(map[string]interface{}{
+		"Amount": 0, "CostPrice": 0, "CurrentPrice": 0, "Pnl": 0, "Status": "N"})
+}
+
+// UpdatePositionStatus update status to B or S,
+// if status is B mean buying, return 0, do noting,
+// if status is S mean selling, return 0, do noting,
+// only status is N can change, return 1, this like a lock
+func UpdatePositionStatus(db *gorm.DB, token string, status string) int64 {
+	tx := db.Table("positions").Where("token=? and status=?",
+		token,
+		"N",
+	).Update("status", status)
+	return tx.RowsAffected
 }
 
 func InitMysql(dsn string) (*gorm.DB, error) {

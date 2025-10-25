@@ -28,6 +28,7 @@ type Position struct {
 	CurrentPrice float64
 	Pnl          float64
 	Decimals     int64
+	Status       string
 }
 
 type SwapRecord struct {

@@ -70,3 +70,10 @@ type JitoTransactionRespBody struct {
 	Jsonrpc string `json:"jsonrpc"`
 	Result  string `json:"result"`
 }
+
+type TokenBalanceChange struct {
+	Owner      string
+	Mint       string
+	PreAmount  string
+	PostAmount string
+}

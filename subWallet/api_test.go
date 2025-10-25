@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"go-solana-bot/common"
 	"go-solana-bot/utils"
 	"testing"
 	"time"
@@ -17,15 +18,8 @@ func TestGetTransactions(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	rpcClient := rpc.New(config.RpcUrl)
-	pubKey := solana.MustPublicKeyFromBase58(config.SubscribeWallet)
 
-	limit := 1
-	signatures, err := rpcClient.GetSignaturesForAddressWithOpts(context.TODO(), pubKey, &rpc.GetSignaturesForAddressOpts{Limit: &limit})
-	if err != nil {
-		fmt.Println(err)
-	}
-	sign := signatures[0].Signature.String()
+	sign := "51TYWL98dtzpbkEMnQebapGBhT9CxuG4oEeKjHFHLoTt9SQWZ2Rb7rtuvHttjUxAz3hvQG9cnveaDbSDheYHGkP8"
 	req := "{\"transactions\": [\"" + sign + "\"]}"
 	query := map[string]string{}
 	query["api-key"] = config.TransactionsApiKey
@@ -35,6 +29,74 @@ func TestGetTransactions(t *testing.T) {
 		fmt.Println(err)
 	}
 	fmt.Println(string(resp))
+}
+
+func TestGetTransactions2(t *testing.T) {
+	config, err := utils.LoadConfig()
+	if err != nil {
+		panic(err)
+	}
+	sign := "3JE25UxASi6dWj7a18aXd1eGTwgJBP9jj2bFNVbG3ozudkhqjewgjSeCZxndp6Dh6Lbt8rZ469tpgy6yxaXPDvbY"
+
+	reqBody := fmt.Sprintf(`{
+		"jsonrpc": "2.0",
+		"id": 1,
+		"method": "getTransaction",
+		"params": [
+		  "%s",
+		  {
+			"encoding": "json",
+			"maxSupportedTransactionVersion": 0
+		  }
+		]
+	}`, sign)
+
+	resp, err := utils.HttpPost(config.RpcUrl, []byte(reqBody), nil)
+	if err != nil {
+		return
+	}
+	fmt.Println(string(resp))
+}
+
+func TestGetTransactions3(t *testing.T) {
+	config, err := utils.LoadConfig()
+	if err != nil {
+		panic(err)
+	}
+	rpcClient := rpc.New(config.RpcUrl)
+	version := uint64(0)
+	tx, err := rpcClient.GetParsedTransaction(context.Background(),
+		solana.MustSignatureFromBase58("51TYWL98dtzpbkEMnQebapGBhT9CxuG4oEeKjHFHLoTt9SQWZ2Rb7rtuvHttjUxAz3hvQG9cnveaDbSDheYHGkP8"),
+		&rpc.GetParsedTransactionOpts{
+			MaxSupportedTransactionVersion: &version,
+		},
+	)
+	if err != nil {
+		return
+	}
+
+	balances := make([]common.TokenBalanceChange, len(tx.Meta.PostTokenBalances))
+
+	for i, balance := range tx.Meta.PostTokenBalances {
+		balances[i] = common.TokenBalanceChange{
+			Owner:      balance.Owner.String(),
+			Mint:       balance.Mint.String(),
+			PostAmount: balance.UiTokenAmount.Amount,
+		}
+	}
+
+	for _, preBalance := range tx.Meta.PreTokenBalances {
+		for i, postBalance := range balances {
+			if preBalance.Owner.String() == postBalance.Owner && preBalance.Mint.String() == postBalance.Mint {
+				balances[i].PreAmount = preBalance.UiTokenAmount.Amount
+			}
+		}
+	}
+
+	fmt.Println("show balance change")
+	for _, balance := range balances {
+		fmt.Printf("%s %s %s -> %s\n", balance.Owner, balance.Mint, balance.PreAmount, balance.PostAmount)
+	}
 }
 
 func TestGetPrice(t *testing.T) {

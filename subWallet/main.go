@@ -52,21 +52,36 @@ func main() {
 		//spew.Dump(signatures)
 
 		// Option 1
-		// GetTransactions1(signatures, config)
-		// Option 2
-		transactions, err := GetTransactions2(signatures, config)
+		sign := signatures[0].Signature
+		transaction, err := GetTransactions1(&sign, config)
 		if err != nil {
 			panic(err)
 		}
-
 		// Only need ToUserAccount's token transfers
 		buyMints := make([]string, 0)
-		transaction := transactions[0]
-		for _, tt := range transaction.TokenTransfers {
-			if tt.ToUserAccount == pubKey.String() && tt.Mint != config.SolToken {
-				buyMints = append(buyMints, tt.Mint)
+		if transaction.Success {
+			for _, tt := range transaction.Result.TokenBalanceChanges {
+				if tt.Owner == pubKey.String() && tt.Mint != config.SolToken && tt.Mint != config.UsdcToken {
+					buyMints = append(buyMints, tt.Mint)
+				}
 			}
 		}
+
+		// Option 2
+		//transactions, err := GetTransactions2(signatures, config)
+		//if err != nil {
+		//	panic(err)
+		//}
+		//
+		//// Only need ToUserAccount's token transfers
+		//buyMints := make([]string, 0)
+		//transaction := transactions[0]
+		//for _, tt := range transaction.TokenTransfers {
+		//	if tt.ToUserAccount == pubKey.String() && tt.Mint != config.SolToken && tt.Mint != config.UsdcToken {
+		//		buyMints = append(buyMints, tt.Mint)
+		//	}
+		//}
+
 		// Remove repeated
 		buyMints = RemoveRepeatedElement(buyMints)
 		jsonByte, _ := json.Marshal(common.SwapMessage{SwapType: "buy", BuyMints: buyMints})
@@ -79,13 +94,19 @@ func main() {
 }
 
 // GetTransactions1 https://api.shyft.to/sol/v1/transaction/parsed
-func GetTransactions1(signatures *solana.Signature, config *utils.Config) {
+func GetTransactions1(signatures *solana.Signature, config *utils.Config) (*common.STransaction, error) {
 	out, err := utils.HttpGet(config.STransactionsUrl+"?network=mainnet-beta&txn_signature="+signatures.String(),
 		map[string]string{"x-api-key": config.STransactionsApiKey})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	fmt.Println(string(out))
+	var transaction common.STransaction
+	err = json.Unmarshal(out, &transaction)
+	if err != nil {
+		return nil, err
+	}
+	//fmt.Println(string(out))
+	return &transaction, nil
 }
 
 // GetTransactions2 https://api.helius.xyz/v0/transactions

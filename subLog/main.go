@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"go-solana-bot/common"
 	"go-solana-bot/utils"
 
@@ -45,21 +44,31 @@ func main() {
 		signatures := got.Value.Signature
 
 		// Option 1
-		GetTransactions1(&signatures, config)
+		_, err = GetTransactions1(&signatures, config)
+		if err != nil {
+			panic(err)
+		}
+		// TODO analyze transactions and send message to buy token?
 		// Option 2
 		//transactions, err := GetTransactions2(signatures, config)
-		// TODO analyze transactions and send message to buy token?
+
 	}
 }
 
 // GetTransactions1 https://api.shyft.to/sol/v1/transaction/parsed
-func GetTransactions1(signatures *solana.Signature, config *utils.Config) {
+func GetTransactions1(signatures *solana.Signature, config *utils.Config) (*common.STransaction, error) {
 	out, err := utils.HttpGet(config.STransactionsUrl+"?network=mainnet-beta&txn_signature="+signatures.String(),
 		map[string]string{"x-api-key": config.STransactionsApiKey})
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	fmt.Println(string(out))
+	var transaction common.STransaction
+	err = json.Unmarshal(out, &transaction)
+	if err != nil {
+		return nil, err
+	}
+	//fmt.Println(string(out))
+	return &transaction, nil
 }
 
 // GetTransactions2 https://api.helius.xyz/v0/transactions

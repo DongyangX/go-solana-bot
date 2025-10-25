@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"go-solana-bot/common"
 	"go-solana-bot/utils"
 	"testing"
 	"time"
@@ -58,13 +59,19 @@ func TestGetTransactions3(t *testing.T) {
 	if err != nil {
 		panic(err)
 	}
-	out, err := utils.HttpGet(config.STransactionsUrl+
-		"51TYWL98dtzpbkEMnQebapGBhT9CxuG4oEeKjHFHLoTt9SQWZ2Rb7rtuvHttjUxAz3hvQG9cnveaDbSDheYHGkP8",
+	out, err := utils.HttpGet(config.STransactionsUrl+"?network=mainnet-beta&txn_signature="+
+		"4rYgW8xHE6G22ZEXTfbEo8odTHmQooRHpa223Avj8f6YMvr5gYB7dY8n9Yej77BDozDEUZWBcumY2en6LnND9FYb",
 		map[string]string{"x-api-key": config.STransactionsApiKey})
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(string(out))
+	var transaction common.STransaction
+	err = json.Unmarshal(out, &transaction)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(transaction.Result.TokenBalanceChanges)
 }
 
 func TestGetPrice(t *testing.T) {

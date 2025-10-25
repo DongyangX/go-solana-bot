@@ -71,9 +71,17 @@ type JitoTransactionRespBody struct {
 	Result  string `json:"result"`
 }
 
+type STransaction struct {
+	Success bool               `json:"success"`
+	Message string             `json:"message"`
+	Result  STransactionResult `json:"result"`
+}
+
+type STransactionResult struct {
+	TokenBalanceChanges []TokenBalanceChange `json:"token_balance_changes"`
+}
+
 type TokenBalanceChange struct {
-	Owner      string
-	Mint       string
-	PreAmount  string
-	PostAmount string
+	Mint  string `json:"mint"`
+	Owner string `json:"owner"`
 }

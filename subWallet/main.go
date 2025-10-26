@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"go-solana-bot/common"
 	"go-solana-bot/utils"
+	"log"
 	"os"
 	"os/signal"
 	"strings"
@@ -51,7 +52,7 @@ func main() {
 
 	<-interrupt
 	for _, mws := range wss {
-		fmt.Printf("Websocket %d Unsubscribe\n", mws.Id)
+		log.Printf("Websocket %d Unsubscribe\n", mws.Id)
 		mws.Sub.Unsubscribe()
 	}
 }
@@ -76,15 +77,17 @@ func ToReceive(mws *MyWebSocket, rpcClient *rpc.Client, config *utils.Config, mq
 	for {
 		got, err := sub.Recv(ctx)
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
+			continue
 		}
 		j, _ := json.Marshal(got)
-		fmt.Printf("%s\n", string(j))
+		log.Printf("[%s]%s\n", mws.PubKey.String(), string(j))
 
 		limit := 1
 		signatures, err := rpcClient.GetSignaturesForAddressWithOpts(context.TODO(), pubKey, &rpc.GetSignaturesForAddressOpts{Limit: &limit})
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
+			continue
 		}
 		//spew.Dump(signatures)
 
@@ -92,13 +95,17 @@ func ToReceive(mws *MyWebSocket, rpcClient *rpc.Client, config *utils.Config, mq
 		sign := signatures[0].Signature
 		transaction, err := GetTransactions1(&sign, config)
 		if err != nil {
-			panic(err)
+			fmt.Println(err)
+			continue
 		}
 		// Only need ToUserAccount's token transfers
 		buyMints := make([]string, 0)
 		if transaction.Success {
 			for _, tt := range transaction.Result.TokenBalanceChanges {
-				if tt.Owner == pubKey.String() && tt.Mint != common.SolToken && tt.Mint != common.UsdcToken {
+				if tt.Owner == pubKey.String() &&
+					tt.Mint != common.SolToken &&
+					tt.Mint != common.UsdcToken &&
+					tt.Mint != common.PumpToken {
 					buyMints = append(buyMints, tt.Mint)
 				}
 			}
@@ -123,10 +130,11 @@ func ToReceive(mws *MyWebSocket, rpcClient *rpc.Client, config *utils.Config, mq
 		if len(buyMints) > 0 {
 			buyMints = RemoveRepeatedElement(buyMints)
 			jsonByte, _ := json.Marshal(common.SwapMessage{SwapType: "buy", BuyMints: buyMints})
-			fmt.Println("Send token buy message:", string(jsonByte))
+			log.Println("Send token buy message:", string(jsonByte))
 			_, err = mqUtil.Send(config.MqTopic, jsonByte)
 			if err != nil {
-				panic(err)
+				fmt.Println(err)
+				continue
 			}
 		}
 	}

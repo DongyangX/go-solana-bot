@@ -29,6 +29,9 @@ func main() {
 		panic(err)
 	}
 
+	mqUtil := utils.NewMqUtil(config.MqUrl)
+	defer mqUtil.Stop()
+
 	// 1.Get Message
 	c, err := rocketmq.NewPushConsumer(
 		consumer.WithGroupName(config.MqGroup),
@@ -51,7 +54,7 @@ func main() {
 					// Check signature need 60 second so use goroutine
 					// 60 second same token buy or sell message will come, use sql row lock
 					if CheckPositionStatus(db, mint, "B") > 0 {
-						go BuyMint(mint, config, db)
+						go BuyMint(mint, config, db, mqUtil)
 					}
 				}
 			} else {
@@ -60,7 +63,7 @@ func main() {
 					// Check signature need 60 second so use goroutine
 					// 60 second same token buy or sell message will come, use sql row lock
 					if CheckPositionStatus(db, mint.Token, "S") > 0 {
-						go SellMint(mint.Token, mint.Amount, config, db)
+						go SellMint(mint.Token, mint.Amount, config, db, mqUtil)
 					}
 				}
 			}
@@ -83,9 +86,12 @@ func main() {
 	}
 }
 
-func BuyMint(mint string, config *utils.Config, db *gorm.DB) {
+func BuyMint(mint string, config *utils.Config, db *gorm.DB, mqUtil *utils.MqUtil) {
+	if mint == common.UsdcToken {
+		return
+	}
 	amount := config.OneBuyUsd * float64(common.LAMPORTS_PER_USDC) // Transfer to lamports
-	swapRecord, err := Swap(common.UsdcToken, mint, uint64(amount), config.BuySlippage)
+	swapRecord, err := Swap(common.UsdcToken, mint, uint64(amount), config.BuySlippage, "buy", mqUtil)
 	if err != nil {
 		// should roll back
 		RollbackPositionStatus(db, mint)
@@ -155,8 +161,8 @@ func UpdateDataBuy(db *gorm.DB, record *common.SwapRecord) {
 	}
 }
 
-func SellMint(mint string, amount int64, config *utils.Config, db *gorm.DB) {
-	swapRecord, err := Swap(mint, common.UsdcToken, uint64(amount), config.SellSlippage)
+func SellMint(mint string, amount int64, config *utils.Config, db *gorm.DB, mqUtil *utils.MqUtil) {
+	swapRecord, err := Swap(mint, common.UsdcToken, uint64(amount), config.SellSlippage, "sell", mqUtil)
 	if err != nil {
 		// should roll back
 		RollbackPositionStatus(db, mint)

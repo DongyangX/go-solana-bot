@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"time"
 )
 
 var (
@@ -15,7 +16,7 @@ var (
 
 func GetHttpClient() *http.Client {
 	if client == nil {
-		client = &http.Client{}
+		client = &http.Client{Timeout: time.Second * 10}
 	}
 	return client
 }

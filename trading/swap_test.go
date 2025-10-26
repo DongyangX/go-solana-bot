@@ -4,15 +4,17 @@ import (
 	"go-solana-bot/common"
 	"go-solana-bot/utils"
 	"testing"
+
+	"github.com/gagliardetto/solana-go"
 )
 
 func TestSwap(t *testing.T) {
 
-	amount := 0.2 * float64(common.LAMPORTS_PER_USDC)
-	Swap("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
-		"3wPQhXYqy861Nhoc4bahtpf7G3e89XCLfZ67ptEfZUSA",
+	amount := 0.2 * float64(solana.LAMPORTS_PER_SOL)
+	Swap("So11111111111111111111111111111111111111112",
+		"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
 		uint64(amount),
-		5)
+		2, "buy", nil)
 
 }
 
@@ -24,7 +26,7 @@ func TestBuyMint(t *testing.T) {
 		panic(err)
 	}
 	// BuyMint(mint string, config *utils.Config, client *http.Client, db *gorm.DB)
-	BuyMint("CY1P83KnKwFYostvjQcoR2HJLyEJWRBRaVQmYyyD3cR8", config, db)
+	BuyMint("GkyPYa7NnCFbduLknCfBfP7p8564X1VZhwZYJ6CZpump", config, db, nil)
 }
 
 func TestSellMint(t *testing.T) {
@@ -39,6 +41,6 @@ func TestSellMint(t *testing.T) {
 		panic(tx.Error)
 	} else {
 		// SellMint(mint string, amount int64, config *utils.Config, db *gorm.DB)
-		SellMint(mint.Token, mint.Amount, config, db)
+		SellMint(mint.Token, mint.Amount, config, db, nil)
 	}
 }

@@ -2,7 +2,7 @@ package utils
 
 import (
 	"context"
-	"fmt"
+	"log"
 
 	"github.com/apache/rocketmq-client-go/v2"
 	"github.com/apache/rocketmq-client-go/v2/primitive"
@@ -47,9 +47,9 @@ func (mq *MqUtil) Send(topic string, message []byte) (*primitive.SendResult, err
 	// 同步发送消息
 	res, err := mq.producer.SendSync(context.Background(), msg)
 	if err != nil {
-		fmt.Println("Send failed:", err)
+		log.Println("Send failed:", err)
 	} else {
-		fmt.Println("Send success:", res.String())
+		log.Println("Send success:", res.String())
 	}
 	return res, err
 }

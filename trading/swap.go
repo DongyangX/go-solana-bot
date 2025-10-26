@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"go-solana-bot/common"
 	"go-solana-bot/utils"
+	"log"
 	"time"
 
 	"github.com/gagliardetto/solana-go/rpc"
@@ -14,7 +15,7 @@ import (
 	"github.com/ilkamo/jupiter-go/solana"
 )
 
-func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64) (*common.SwapRecord, error) {
+func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64, flag string, mqUtil *utils.MqUtil) (*common.SwapRecord, error) {
 
 	config, err := utils.LoadConfig()
 	if err != nil {
@@ -48,7 +49,7 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 
 	quote := quoteResponse.JSON200
 	j, _ := json.Marshal(quote)
-	fmt.Printf("%s\n", string(j))
+	log.Printf("Quote: %s\n", string(j))
 
 	dynamicComputeUnitLimit := true
 
@@ -94,7 +95,7 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 
 	swap := swapResponse.JSON200
 	j, _ = json.Marshal(swap)
-	fmt.Printf("%s\n", string(j))
+	log.Printf("Swap: %s\n", string(j))
 
 	// Create a wallet from private key.
 	walletPrivateKey := config.PrivateKey
@@ -124,7 +125,10 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 		}
 	}
 	j, _ = json.Marshal(signedTx)
-	fmt.Printf("Signature: %s\n", string(j))
+	log.Printf("Signature: %s\n", string(j))
+	if string(j) == "" {
+		return nil, fmt.Errorf("invalid Signature")
+	}
 
 	// Wait a bit to let the transaction propagate to the network.
 	// This is just an example and not a best practice.
@@ -141,9 +145,6 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
-	mqUtil := utils.NewMqUtil(config.MqUrl)
-	defer mqUtil.Stop()
-
 	// Check 6 Times
 	checkTimes := 6
 	count := 0
@@ -157,23 +158,23 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 			txSuccess, err := solanaClient.CheckSignature(ctx, signedTx)
 			if err != nil {
 				if txSuccess {
-					fmt.Println("CheckSignature err:", err)
+					fmt.Println("CheckSignature err1:", err)
 					// send message to buy again
-					if inputMint == common.UsdcToken {
+					if flag == "buy" && mqUtil != nil {
 						buyMints := make([]string, 0)
 						buyMints = append(buyMints, outputMint)
 						jsonByte, _ := json.Marshal(common.SwapMessage{SwapType: "buy", BuyMints: buyMints})
-						fmt.Println("Send token buy message:", string(jsonByte))
+						log.Println("Send token buy message:", string(jsonByte))
 						_, err = mqUtil.Send(config.MqTopic, jsonByte)
 						if err != nil {
-							panic(err)
+							log.Println(err)
 						}
-						return nil, fmt.Errorf("confirmed but transaction not success")
+						log.Println("confirmed but transaction not success")
 					}
 					ticker.Stop()
 					break
 				} else {
-					fmt.Println("CheckSignature err:", err)
+					fmt.Println("CheckSignature err2:", err)
 				}
 			} else {
 				if txSuccess {
@@ -226,12 +227,12 @@ func SendTransactionWithJito(ctx context.Context, txBase64 string, wallet solana
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("jito request: %s\n", string(reqBodyJson))
+	log.Printf("jito request: %s\n", string(reqBodyJson))
 	resp, err := utils.HttpPost(config.JitoUrl, reqBodyJson, nil)
 	if err != nil {
 		return "", err
 	}
-	fmt.Printf("jito response: %s\n", string(resp))
+	log.Printf("jito response: %s\n", string(resp))
 
 	var respBody common.JitoTransactionRespBody
 	err = json.Unmarshal(resp, &respBody)

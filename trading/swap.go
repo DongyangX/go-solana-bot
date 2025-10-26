@@ -145,8 +145,9 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 	defer mqUtil.Stop()
 
 	// Check 6 Times
+	checkTimes := 6
 	count := 0
-	for count < 6 {
+	for count < checkTimes {
 		select {
 		case <-ticker.C:
 			count++
@@ -169,6 +170,7 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 						}
 						return nil, fmt.Errorf("confirmed but transaction not success")
 					}
+					ticker.Stop()
 					break
 				} else {
 					fmt.Println("CheckSignature err:", err)
@@ -185,7 +187,7 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 					return &record, nil
 				}
 			}
-			if count >= 6 {
+			if count >= checkTimes {
 				break
 			}
 		}

@@ -6,27 +6,63 @@ import (
 	"fmt"
 	"go-solana-bot/common"
 	"go-solana-bot/utils"
+	"os"
+	"os/signal"
+	"strings"
+	"syscall"
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gagliardetto/solana-go/rpc/ws"
 )
 
+type MyWebSocket struct {
+	Id     int
+	Sub    *ws.AccountSubscription
+	PubKey solana.PublicKey
+}
+
 func main() {
 	config, _ := utils.LoadConfig()
-
-	ctx := context.Background()
 	rpcClient := rpc.New(config.RpcUrl)
-	wsClient, err := ws.Connect(context.Background(), config.WsUrl)
-	if err != nil {
-		panic(err)
-	}
 
 	mqUtil := utils.NewMqUtil(config.MqUrl)
 	defer mqUtil.Stop()
 
-	pubKey := solana.MustPublicKeyFromBase58(config.SubscribeWallet)
+	pubKeys := strings.Split(config.SubscribeWallet, ",")
+	var wss = make([]*MyWebSocket, len(pubKeys))
 
+	for index, pubkey := range pubKeys {
+		pubKey := solana.MustPublicKeyFromBase58(pubkey)
+
+		mySocket := MyWebSocket{
+			Id:     index,
+			PubKey: pubKey,
+		}
+		wss[index] = &mySocket
+	}
+
+	for _, mws := range wss {
+		go ToReceive(mws, rpcClient, config, mqUtil)
+	}
+
+	interrupt := make(chan os.Signal, 1)
+	signal.Notify(interrupt, os.Interrupt, syscall.SIGTERM)
+
+	<-interrupt
+	for _, mws := range wss {
+		fmt.Printf("Websocket %d Unsubscribe\n", mws.Id)
+		mws.Sub.Unsubscribe()
+	}
+}
+
+func ToReceive(mws *MyWebSocket, rpcClient *rpc.Client, config *utils.Config, mqUtil *utils.MqUtil) {
+	pubKey := mws.PubKey
+	ctx := context.Background()
+	wsClient, err := ws.Connect(ctx, config.WsUrl)
+	if err != nil {
+		panic(err)
+	}
 	sub, err := wsClient.AccountSubscribe(
 		pubKey,
 		"",
@@ -34,8 +70,8 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer sub.Unsubscribe()
-
+	// for Unsubscribe
+	mws.Sub = sub
 	for {
 		got, err := sub.Recv(ctx)
 		if err != nil {
@@ -83,12 +119,14 @@ func main() {
 		//}
 
 		// Remove repeated
-		buyMints = RemoveRepeatedElement(buyMints)
-		jsonByte, _ := json.Marshal(common.SwapMessage{SwapType: "buy", BuyMints: buyMints})
-		fmt.Println("Send token buy message:", string(jsonByte))
-		_, err = mqUtil.Send(config.MqTopic, jsonByte)
-		if err != nil {
-			panic(err)
+		if len(buyMints) > 0 {
+			buyMints = RemoveRepeatedElement(buyMints)
+			jsonByte, _ := json.Marshal(common.SwapMessage{SwapType: "buy", BuyMints: buyMints})
+			fmt.Println("Send token buy message:", string(jsonByte))
+			_, err = mqUtil.Send(config.MqTopic, jsonByte)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }

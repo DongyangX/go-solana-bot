@@ -3,7 +3,7 @@ PublicKey: xxx
 PrivateKey: xxx
 
 #SubscribeWallet: 7vhiZSwxBqfsgidsV2dtvSNEjUat913khRava1hLC7eu
-SubscribeWallet: HuTshmtwcQkWBLzgW3m4uwcmik7Lmz4YFpYcTqMJpXiP
+SubscribeWallet: 728avs5uEouE56hLhaffWHf3nvi4TLsy6T1r27zMeWrW,7vhiZSwxBqfsgidsV2dtvSNEjUat913khRava1hLC7eu
 
 #RpcUrl: https://mainnet.helius-rpc.com/?api-key=xxx
 #WsUrl: wss://mainnet.helius-rpc.com/?api-key=xxx

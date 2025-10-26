@@ -147,9 +147,18 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 		select {
 		case <-ticker.C:
 			count++
+			// false err != nil fail
+			// true err != nil confirmed but transaction not success
+			// true err == nil confirmed and transaction success
 			txSuccess, err := solanaClient.CheckSignature(ctx, signedTx)
 			if err != nil {
-				fmt.Println("CheckSignature err:", err)
+				if txSuccess {
+					fmt.Println("CheckSignature err:", err)
+					// TODO send message to buy again
+					break
+				} else {
+					fmt.Println("CheckSignature err:", err)
+				}
 			} else {
 				if txSuccess {
 					record := common.SwapRecord{

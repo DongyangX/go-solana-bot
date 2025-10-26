@@ -27,9 +27,6 @@ SellPriorityFee: 0
 SellRisePercent: 20
 SellFallPercent: 10
 
-SolToken: So11111111111111111111111111111111111111112
-UsdcToken: EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
-
 MqUrl: 192.168.2.119:9876
 MqGroup: SubGroup
 MqTopic: SubTopic

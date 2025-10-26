@@ -85,7 +85,7 @@ func main() {
 
 func BuyMint(mint string, config *utils.Config, db *gorm.DB) {
 	amount := config.OneBuyUsd * float64(common.LAMPORTS_PER_USDC) // Transfer to lamports
-	swapRecord, err := Swap(config.UsdcToken, mint, uint64(amount), config.BuySlippage)
+	swapRecord, err := Swap(common.UsdcToken, mint, uint64(amount), config.BuySlippage)
 	if err != nil {
 		fmt.Println("swap err:", err)
 		return
@@ -149,7 +149,7 @@ func UpdateDataBuy(db *gorm.DB, record *common.SwapRecord) {
 }
 
 func SellMint(mint string, amount int64, config *utils.Config, db *gorm.DB) {
-	swapRecord, err := Swap(mint, config.UsdcToken, uint64(amount), config.SellSlippage)
+	swapRecord, err := Swap(mint, common.UsdcToken, uint64(amount), config.SellSlippage)
 	if err != nil {
 		fmt.Println("swap err:", err)
 		return

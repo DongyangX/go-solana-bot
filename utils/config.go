@@ -23,8 +23,6 @@ type Config struct {
 	QuoteUrl            string
 	PriceUrl            string
 	OneBuyUsd           float64 // 每次购买的刀乐数
-	SolToken            string
-	UsdcToken           string
 	MqUrl               string
 	MqGroup             string
 	MqTopic             string

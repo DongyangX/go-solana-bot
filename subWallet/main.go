@@ -61,7 +61,7 @@ func main() {
 		buyMints := make([]string, 0)
 		if transaction.Success {
 			for _, tt := range transaction.Result.TokenBalanceChanges {
-				if tt.Owner == pubKey.String() && tt.Mint != config.SolToken && tt.Mint != config.UsdcToken {
+				if tt.Owner == pubKey.String() && tt.Mint != common.SolToken && tt.Mint != common.UsdcToken {
 					buyMints = append(buyMints, tt.Mint)
 				}
 			}
@@ -77,7 +77,7 @@ func main() {
 		//buyMints := make([]string, 0)
 		//transaction := transactions[0]
 		//for _, tt := range transaction.TokenTransfers {
-		//	if tt.ToUserAccount == pubKey.String() && tt.Mint != config.SolToken && tt.Mint != config.UsdcToken {
+		//	if tt.ToUserAccount == pubKey.String() && tt.Mint != common.SolToken && tt.Mint != common.UsdcToken {
 		//		buyMints = append(buyMints, tt.Mint)
 		//	}
 		//}

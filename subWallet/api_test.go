@@ -83,7 +83,7 @@ func TestGetPrice(t *testing.T) {
 
 	mint := "3wPQhXYqy861Nhoc4bahtpf7G3e89XCLfZ67ptEfZUSA"
 	amount := "1000000"
-	qUrl := config.QuoteUrl + "?inputMint=" + config.UsdcToken + "&outputMint=" + mint + "&amount=" + amount + "&slippageBps=50"
+	qUrl := config.QuoteUrl + "?inputMint=" + common.UsdcToken + "&outputMint=" + mint + "&amount=" + amount + "&slippageBps=50"
 
 	resp, err := utils.HttpProxyGet(qUrl)
 	fmt.Println(string(resp))

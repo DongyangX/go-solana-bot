@@ -220,7 +220,7 @@ func CheckPositionStatus(db *gorm.DB, token string, status string) int64 {
 	if status == "B" { // if buy, the token will not exist
 		var count int64
 		db.Table("positions").Where("token = ?", token).Count(&count)
-		if count > 0 {
+		if count == 0 {
 			// not exist, buy
 			return 999
 		}

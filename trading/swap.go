@@ -203,6 +203,9 @@ func SendTransactionWithJito(ctx context.Context, txBase64 string, wallet solana
 	}
 	fmt.Printf("jito request: %s\n", string(reqBodyJson))
 	resp, err := utils.HttpPost(config.JitoUrl, reqBodyJson, nil)
+	if err != nil {
+		return "", err
+	}
 	fmt.Printf("jito response: %s\n", string(resp))
 
 	var respBody common.JitoTransactionRespBody

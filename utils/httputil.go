@@ -6,24 +6,25 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"sync"
 )
 
 var (
 	client      *http.Client
 	proxyClient *http.Client
-	once        sync.Once
 )
 
 func GetHttpClient() *http.Client {
-	once.Do(func() {
+	if client == nil {
 		client = &http.Client{}
-	})
+	}
 	return client
 }
 
 func HttpGet(url string, header map[string]string) ([]byte, error) {
 	client := GetHttpClient()
+	if client == nil {
+		return nil, fmt.Errorf("http client is nil")
+	}
 	req, _ := http.NewRequest("GET", url, nil)
 	if header != nil {
 		for k, v := range header {
@@ -41,6 +42,9 @@ func HttpGet(url string, header map[string]string) ([]byte, error) {
 
 func HttpPost(url string, reqBody []byte, query map[string]string) ([]byte, error) {
 	client := GetHttpClient()
+	if client == nil {
+		return nil, fmt.Errorf("http client is nil")
+	}
 	payload := bytes.NewReader(reqBody)
 	req, _ := http.NewRequest("POST", url, payload)
 	if query != nil {
@@ -61,7 +65,7 @@ func HttpPost(url string, reqBody []byte, query map[string]string) ([]byte, erro
 }
 
 func GetProxyClient() *http.Client {
-	once.Do(func() {
+	if proxyClient == nil {
 		config, err := LoadConfig()
 		if err != nil {
 			fmt.Println(err)
@@ -82,12 +86,15 @@ func GetProxyClient() *http.Client {
 			// Do not use proxy
 			proxyClient = &http.Client{}
 		}
-	})
+	}
 	return proxyClient
 }
 
 func HttpProxyGet(url string) ([]byte, error) {
 	proxyClient := GetProxyClient()
+	if proxyClient == nil {
+		return nil, fmt.Errorf("http client is nil")
+	}
 	resp, err := proxyClient.Get(url)
 	if err != nil {
 		return nil, err

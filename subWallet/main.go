@@ -70,6 +70,7 @@ func ToReceive(mws *MyWebSocket, rpcClient *rpc.Client, config *utils.Config, mq
 	if err != nil {
 		panic(err)
 	}
+	fmt.Printf("Subscribed to %s...\n", pubKey.String())
 	// for Unsubscribe
 	mws.Sub = sub
 	for {

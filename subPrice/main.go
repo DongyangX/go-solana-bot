@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/gagliardetto/solana-go/rpc/jsonrpc"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
@@ -18,7 +20,7 @@ func main() {
 
 	config, _ := utils.LoadConfig()
 
-	ticker := time.NewTicker(10 * time.Second)
+	ticker := time.NewTicker(20 * time.Second)
 	defer ticker.Stop()
 
 	mqUtil := utils.NewMqUtil(config.MqUrl)
@@ -30,8 +32,15 @@ func main() {
 	}
 
 	for range ticker.C {
+		// 0 Update amount
+		err := UpdateAmount(db, config)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+
 		// 1 Update Current Price
-		err := UpdateCurrentPrice(db, config)
+		err = UpdateCurrentPrice(db, config)
 		if err != nil {
 			fmt.Println(err)
 			continue
@@ -71,6 +80,64 @@ func main() {
 			}
 		}
 	}
+}
+
+func UpdateAmount(db *gorm.DB, config *utils.Config) error {
+	reqBody := fmt.Sprintf(`{
+		"jsonrpc": "2.0",
+		"id": 1,
+		"method": "getTokenAccountsByOwner",
+		"params": [
+		  "%s",
+		  {
+		    "programId": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+		  },
+		  {
+		    "commitment": "finalized",
+		    "encoding": "jsonParsed"
+          }
+		]
+	}`, config.PublicKey)
+
+	resp, err := utils.HttpProxyPost(common.MainNetEndPoint, []byte(reqBody), nil)
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(resp))
+	var rpcResponse jsonrpc.RPCResponse
+	var result rpc.GetTokenAccountsResult
+	err = json.Unmarshal(resp, &rpcResponse)
+	if err != nil {
+		return err
+	}
+	err = rpcResponse.GetObject(&result)
+	if err != nil {
+		return err
+	}
+	var amountInfos = make([]common.TokenAccount, 0)
+	for _, v := range result.Value {
+		data := v.Account.Data.GetRawJSON()
+		//fmt.Println(string(data))
+		var tokenAccount common.TokenAccount
+		_ = json.Unmarshal(data, &tokenAccount)
+		//fmt.Println(tokenAccount.Parsed.Info.Mint)
+		amountInfos = append(amountInfos, tokenAccount)
+	}
+
+	for _, amountInfo := range amountInfos {
+		if amountInfo.Parsed.Info.Mint != common.UsdcToken {
+			UpdateAmountByToken(db, &amountInfo)
+		}
+	}
+
+	return nil
+}
+
+func UpdateAmountByToken(db *gorm.DB, tokenAccount *common.TokenAccount) int64 {
+	tx := db.Table("positions").
+		Where("token=?", tokenAccount.Parsed.Info.Mint).
+		Update("amount", tokenAccount.Parsed.Info.TokenAmount.Amount)
+	return tx.RowsAffected
 }
 
 func UpdateCurrentPrice(db *gorm.DB, config *utils.Config) error {
@@ -162,7 +229,7 @@ func UpdateAll(db *gorm.DB, positions []common.Position) {
 }
 
 func InitMysql(dsn string) (*gorm.DB, error) {
-	client, err := gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logger.Info)})
+	client, err := gorm.Open(mysql.Open(dsn), &gorm.Config{Logger: logger.Default.LogMode(logger.Warn)})
 	if err != nil {
 		fmt.Println("failed to connect database" + err.Error())
 		return nil, err

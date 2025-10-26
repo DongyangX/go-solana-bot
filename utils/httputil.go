@@ -104,3 +104,27 @@ func HttpProxyGet(url string) ([]byte, error) {
 	respBody, _ := io.ReadAll(resp.Body)
 	return respBody, nil
 }
+
+func HttpProxyPost(url string, reqBody []byte, query map[string]string) ([]byte, error) {
+	proxyClient := GetProxyClient()
+	if proxyClient == nil {
+		return nil, fmt.Errorf("http client is nil")
+	}
+	payload := bytes.NewReader(reqBody)
+	req, _ := http.NewRequest("POST", url, payload)
+	if query != nil {
+		q := req.URL.Query()
+		for k, v := range query {
+			q.Add(k, v)
+		}
+		req.URL.RawQuery = q.Encode()
+	}
+	req.Header.Add("Content-Type", "application/json")
+	resp, err := proxyClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	respBody, _ := io.ReadAll(resp.Body)
+	return respBody, nil
+}

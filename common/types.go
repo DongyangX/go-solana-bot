@@ -85,3 +85,23 @@ type TokenBalanceChange struct {
 	Mint  string `json:"mint"`
 	Owner string `json:"owner"`
 }
+
+type TokenAccount struct {
+	Parsed TokenAccountParsed `json:"parsed"`
+}
+
+type TokenAccountParsed struct {
+	Info TokenAccountInfo `json:"info"`
+}
+
+type TokenAccountInfo struct {
+	Mint        string                  `json:"mint"`
+	TokenAmount TokenAccountTokenAmount `json:"tokenAmount"`
+}
+
+type TokenAccountTokenAmount struct {
+	Amount         string  `json:"amount"`
+	Decimals       int64   `json:"decimals"`
+	UiAmount       float64 `json:"uiAmount"`
+	UiAmountString string  `json:"uiAmountString"`
+}

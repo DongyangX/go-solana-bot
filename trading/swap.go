@@ -21,7 +21,7 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 		return nil, err
 	}
 
-	jupClient, err := jupiter.NewClientWithResponses(jupiter.DefaultAPIURL, jupiter.WithHTTPClient(utils.GetHttpClient()))
+	jupClient, err := jupiter.NewClientWithResponses(jupiter.DefaultAPIURL, jupiter.WithHTTPClient(utils.GetProxyClient()))
 	if err != nil {
 		return nil, err
 	}

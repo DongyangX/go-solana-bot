@@ -87,22 +87,29 @@ func BuyMint(mint string, config *utils.Config, db *gorm.DB) {
 	amount := config.OneBuyUsd * float64(common.LAMPORTS_PER_USDC) // Transfer to lamports
 	swapRecord, err := Swap(common.UsdcToken, mint, uint64(amount), config.BuySlippage)
 	if err != nil {
+		// should roll back
+		RollbackPositionStatus(db, mint)
 		fmt.Println("swap err:", err)
 		return
 	}
 	// Get Decimals
 	pUrl := config.PriceUrl + "?ids=" + mint
 	resp, err := utils.HttpProxyGet(pUrl)
-	fmt.Println(string(resp))
-
-	priceMap := make(map[string]map[string]float64)
-	err = json.Unmarshal(resp, &priceMap)
 	if err != nil {
-		fmt.Println(err)
-		return
+		// swap success but get decimals error, decimal set default
+		fmt.Println("Get Decimals:", err)
+		swapRecord.Decimals = int64(common.UsdcDecimals)
+	} else {
+		fmt.Println(string(resp))
+		priceMap := make(map[string]map[string]float64)
+		err = json.Unmarshal(resp, &priceMap)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		decimals := priceMap[mint]["decimals"]
+		swapRecord.Decimals = int64(decimals)
 	}
-	decimals := priceMap[mint]["decimals"]
-	swapRecord.Decimals = int64(decimals)
 
 	// the api price is not correct
 	// Calculate price
@@ -151,6 +158,8 @@ func UpdateDataBuy(db *gorm.DB, record *common.SwapRecord) {
 func SellMint(mint string, amount int64, config *utils.Config, db *gorm.DB) {
 	swapRecord, err := Swap(mint, common.UsdcToken, uint64(amount), config.SellSlippage)
 	if err != nil {
+		// should roll back
+		RollbackPositionStatus(db, mint)
 		fmt.Println("swap err:", err)
 		return
 	}
@@ -220,6 +229,11 @@ func CheckPositionStatus(db *gorm.DB, token string, status string) int64 {
 		token,
 		"N",
 	).Update("status", status)
+	return tx.RowsAffected
+}
+
+func RollbackPositionStatus(db *gorm.DB, token string) int64 {
+	tx := db.Table("positions").Where("token=?", token).Update("status", "N")
 	return tx.RowsAffected
 }
 

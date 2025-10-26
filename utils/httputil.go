@@ -32,7 +32,7 @@ func HttpGet(url string, header map[string]string) ([]byte, error) {
 	}
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 	respBody, _ := io.ReadAll(resp.Body)
@@ -90,7 +90,7 @@ func HttpProxyGet(url string) ([]byte, error) {
 	proxyClient := GetProxyClient()
 	resp, err := proxyClient.Get(url)
 	if err != nil {
-		fmt.Println(err)
+		return nil, err
 	}
 	defer resp.Body.Close()
 	respBody, _ := io.ReadAll(resp.Body)

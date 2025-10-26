@@ -141,6 +141,9 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
 
+	mqUtil := utils.NewMqUtil(config.MqUrl)
+	defer mqUtil.Stop()
+
 	// Check 6 Times
 	count := 0
 	for count < 6 {
@@ -154,7 +157,18 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 			if err != nil {
 				if txSuccess {
 					fmt.Println("CheckSignature err:", err)
-					// TODO send message to buy again
+					// send message to buy again
+					if inputMint == common.UsdcToken {
+						buyMints := make([]string, 0)
+						buyMints = append(buyMints, outputMint)
+						jsonByte, _ := json.Marshal(common.SwapMessage{SwapType: "buy", BuyMints: buyMints})
+						fmt.Println("Send token buy message:", string(jsonByte))
+						_, err = mqUtil.Send(config.MqTopic, jsonByte)
+						if err != nil {
+							panic(err)
+						}
+						return nil, fmt.Errorf("confirmed but transaction not success")
+					}
 					break
 				} else {
 					fmt.Println("CheckSignature err:", err)

@@ -158,7 +158,7 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 			txSuccess, err := solanaClient.CheckSignature(ctx, signedTx)
 			if err != nil {
 				if txSuccess {
-					fmt.Println("CheckSignature err1:", err)
+					log.Println("Check signature confirmed but transaction not success:", err)
 					// send message to buy again
 					if flag == "buy" && mqUtil != nil {
 						buyMints := make([]string, 0)
@@ -169,12 +169,12 @@ func Swap(inputMint string, outputMint string, amount uint64, slippageBps uint64
 						if err != nil {
 							log.Println(err)
 						}
-						log.Println("confirmed but transaction not success")
 					}
-					ticker.Stop()
-					break
+					// stop
+					count = checkTimes
+					return nil, fmt.Errorf("confirmed but transaction not success")
 				} else {
-					fmt.Println("CheckSignature err2:", err)
+					log.Println("Check signature err:", err)
 				}
 			} else {
 				if txSuccess {
